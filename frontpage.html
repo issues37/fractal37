@@ -7,13 +7,38 @@
     <meta name="description" content="Real-time WebGL 3D fractal explorer. 7 fractal types, 9 color palettes, fully interactive. No install required.">
     <meta property="og:title" content="fractal37 — Interactive 3D Fractal Explorer">
     <meta property="og:description" content="Real-time WebGL 3D fractal explorer. 7 fractal types, 9 color palettes.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/issues37/fractal37/main/images/preview.png">
     <meta property="og:type" content="website">
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { background: #000; color: #0ff; font-family: 'Orbitron', sans-serif; overflow-x: hidden; }
-      
-      /* HERO SECTION — full-screen fractal embed */
+
+      /* PREVIEW IMAGE BANNER — top of page, full width */
+      .preview-banner {
+        width: 100%; position: relative; overflow: hidden;
+        border-bottom: 1px solid rgba(139,0,255,0.3);
+      }
+      .preview-banner img {
+        width: 100%; display: block; max-height: 420px;
+        object-fit: cover; object-position: center;
+        filter: saturate(1.2);
+      }
+      .preview-banner-caption {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        padding: 20px 32px;
+        background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+      }
+      .preview-banner-caption h1 {
+        font-size: clamp(1.8rem, 5vw, 4rem); font-weight: 900; letter-spacing: 0.15em;
+        color: #0ff; text-shadow: 0 0 40px rgba(0,255,255,0.8), 0 0 80px rgba(139,0,255,0.5);
+      }
+      .preview-banner-caption p {
+        font-size: clamp(0.55rem, 1.5vw, 0.8rem); letter-spacing: 0.3em;
+        color: rgba(139,0,255,0.9); text-transform: uppercase; margin-top: 6px;
+      }
+
+      /* HERO LIVE DEMO SECTION */
       .hero {
         position: relative; width: 100vw; height: 100vh;
         display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
@@ -24,22 +49,19 @@
         border: none; z-index: 1;
       }
       .hero-overlay {
-        position: relative; z-index: 10; text-align: center; padding-bottom: 60px;
+        position: relative; z-index: 10; text-align: center; padding-bottom: 40px;
         pointer-events: none;
       }
-      .hero-title {
-        font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 900; letter-spacing: 0.15em;
-        color: #0ff; text-shadow: 0 0 40px rgba(0,255,255,0.8), 0 0 80px rgba(139,0,255,0.5);
-      }
-      .hero-sub {
-        font-size: clamp(0.7rem, 2vw, 1rem); letter-spacing: 0.3em; color: rgba(139,0,255,0.9);
-        margin-top: 0.5rem; text-transform: uppercase;
-      }
       .hero-hint {
-        margin-top: 2rem; font-size: 0.65rem; letter-spacing: 0.2em;
-        color: rgba(0,255,255,0.4); text-transform: uppercase;
+        font-size: 0.65rem; letter-spacing: 0.2em;
+        color: rgba(0,255,255,0.5); text-transform: uppercase;
       }
-      
+      .hero-label {
+        display: inline-block; background: rgba(0,0,0,0.6); border: 1px solid rgba(0,255,255,0.3);
+        border-radius: 4px; padding: 8px 20px; margin-bottom: 10px;
+        font-size: 0.65rem; letter-spacing: 0.25em; color: rgba(0,255,255,0.7);
+      }
+
       /* FEATURE GRID */
       .features { background: #000; padding: 80px 20px; }
       .features-inner { max-width: 1100px; margin: 0 auto; }
@@ -60,7 +82,21 @@
       .feature-icon { font-size: 1.8rem; margin-bottom: 14px; }
       .feature-name { font-size: 0.75rem; letter-spacing: 0.2em; color: #0ff; text-transform: uppercase; margin-bottom: 10px; }
       .feature-desc { font-size: 0.7rem; color: rgba(0,255,255,0.5); line-height: 1.8; letter-spacing: 0.05em; font-family: monospace; }
-      
+
+      /* CONTROLS SCREENSHOT SECTION */
+      .controls-section { background: rgba(5,5,20,0.98); padding: 80px 20px; }
+      .controls-inner { max-width: 1000px; margin: 0 auto; }
+      .controls-screenshot {
+        width: 100%; border-radius: 8px; display: block;
+        border: 1px solid rgba(139,0,255,0.3);
+        box-shadow: 0 0 60px rgba(139,0,255,0.15), 0 0 120px rgba(0,255,255,0.05);
+        margin-top: 40px;
+      }
+      .controls-caption {
+        margin-top: 20px; text-align: center;
+        font-size: 0.6rem; letter-spacing: 0.2em; color: rgba(139,0,255,0.5); font-family: monospace;
+      }
+
       /* FRACTALS TABLE */
       .fractals { background: rgba(5,5,20,0.95); padding: 80px 20px; }
       .fractals-inner { max-width: 900px; margin: 0 auto; }
@@ -69,7 +105,7 @@
       td { font-size: 0.65rem; color: rgba(0,255,255,0.7); padding: 14px 16px; border-bottom: 1px solid rgba(139,0,255,0.1); font-family: monospace; letter-spacing: 0.05em; }
       tr:hover td { color: #0ff; background: rgba(139,0,255,0.05); }
       .tag { display: inline-block; background: rgba(139,0,255,0.15); border: 1px solid rgba(139,0,255,0.3); border-radius: 3px; padding: 2px 7px; font-size: 0.55rem; letter-spacing: 0.15em; color: #8b00ff; margin-right: 4px; }
-      
+
       /* CTA */
       .cta { padding: 80px 20px; text-align: center; }
       .cta-title { font-size: clamp(1.2rem, 4vw, 2.5rem); font-weight: 700; letter-spacing: 0.15em; color: #0ff; margin-bottom: 16px; }
@@ -84,7 +120,7 @@
       .btn-primary:hover { background: rgba(0,255,255,0.2); box-shadow: 0 0 20px rgba(0,255,255,0.3); }
       .btn-secondary { background: rgba(139,0,255,0.1); border: 1px solid rgba(139,0,255,0.5); color: #8b00ff; }
       .btn-secondary:hover { background: rgba(139,0,255,0.2); box-shadow: 0 0 20px rgba(139,0,255,0.3); }
-      
+
       /* FOOTER */
       footer { padding: 30px 20px; text-align: center; border-top: 1px solid rgba(139,0,255,0.15); }
       footer p { font-size: 0.6rem; color: rgba(139,0,255,0.4); letter-spacing: 0.2em; }
@@ -94,13 +130,21 @@
   </head>
   <body>
 
-    <!-- HERO -->
+    <!-- PREVIEW IMAGE — top of page -->
+    <div class="preview-banner">
+      <img src="images/preview.png" alt="fractal37 — Mandelbox fractal rendered in WebGL">
+      <div class="preview-banner-caption">
+        <h1>fractal37</h1>
+        <p>Interactive 3D Fractal Explorer &nbsp;//&nbsp; WebGL Ray Marching</p>
+      </div>
+    </div>
+
+    <!-- LIVE DEMO EMBED -->
     <section class="hero">
       <iframe src="index.html" title="fractal37 live preview" loading="lazy"></iframe>
       <div class="hero-overlay">
-        <h1 class="hero-title">fractal37</h1>
-        <p class="hero-sub">Interactive 3D Fractal Explorer &nbsp;//&nbsp; WebGL Ray Marching</p>
-        <p class="hero-hint">↑ Live — tap the fractal or press C for controls</p>
+        <div class="hero-label">LIVE DEMO</div>
+        <p class="hero-hint">Tap or press C to open controls</p>
       </div>
     </section>
 
@@ -143,7 +187,19 @@
       </div>
     </section>
 
-    <!-- FRACTAL TABLE -->
+    <!-- CONTROLS SCREENSHOT -->
+    <section class="controls-section">
+      <div class="controls-inner">
+        <p class="section-title">// Controls</p>
+        <p style="text-align:center; font-size:0.65rem; color:rgba(0,255,255,0.45); letter-spacing:0.15em; font-family:monospace;">
+          Press <span style="color:#0ff; border:1px solid rgba(0,255,255,0.4); padding:1px 7px; border-radius:3px;">C</span> or tap the canvas to reveal two side panels with 30+ real-time parameters.
+        </p>
+        <img src="images/controls.png" alt="fractal37 control panels — Menger Sponge with animation, lighting, camera and color controls" class="controls-screenshot">
+        <p class="controls-caption">Left panel: Animation &amp; Fractal settings &nbsp;·&nbsp; Right panel: Camera &amp; Color settings</p>
+      </div>
+    </section>
+
+    <!-- FRACTALS TABLE -->
     <section class="fractals">
       <div class="fractals-inner">
         <p class="section-title">// Fractal Types</p>
