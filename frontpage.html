@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fractal37 — Interactive 3D Fractal Explorer</title>
+    <meta name="description" content="Real-time WebGL 3D fractal explorer. 7 fractal types, 9 color palettes, fully interactive. No install required.">
+    <meta property="og:title" content="fractal37 — Interactive 3D Fractal Explorer">
+    <meta property="og:description" content="Real-time WebGL 3D fractal explorer. 7 fractal types, 9 color palettes.">
+    <meta property="og:type" content="website">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #000; color: #0ff; font-family: 'Orbitron', sans-serif; overflow-x: hidden; }
+      
+      /* HERO SECTION — full-screen fractal embed */
+      .hero {
+        position: relative; width: 100vw; height: 100vh;
+        display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+        overflow: hidden;
+      }
+      .hero iframe {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        border: none; z-index: 1;
+      }
+      .hero-overlay {
+        position: relative; z-index: 10; text-align: center; padding-bottom: 60px;
+        pointer-events: none;
+      }
+      .hero-title {
+        font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 900; letter-spacing: 0.15em;
+        color: #0ff; text-shadow: 0 0 40px rgba(0,255,255,0.8), 0 0 80px rgba(139,0,255,0.5);
+      }
+      .hero-sub {
+        font-size: clamp(0.7rem, 2vw, 1rem); letter-spacing: 0.3em; color: rgba(139,0,255,0.9);
+        margin-top: 0.5rem; text-transform: uppercase;
+      }
+      .hero-hint {
+        margin-top: 2rem; font-size: 0.65rem; letter-spacing: 0.2em;
+        color: rgba(0,255,255,0.4); text-transform: uppercase;
+      }
+      
+      /* FEATURE GRID */
+      .features { background: #000; padding: 80px 20px; }
+      .features-inner { max-width: 1100px; margin: 0 auto; }
+      .section-title {
+        text-align: center; font-size: 0.7rem; letter-spacing: 0.4em;
+        color: rgba(139,0,255,0.7); text-transform: uppercase; margin-bottom: 50px;
+      }
+      .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+      .feature-card {
+        background: rgba(5,5,20,0.9); border: 1px solid rgba(139,0,255,0.25);
+        border-radius: 8px; padding: 28px 24px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+      .feature-card:hover {
+        border-color: rgba(0,255,255,0.4);
+        box-shadow: 0 0 30px rgba(0,255,255,0.08);
+      }
+      .feature-icon { font-size: 1.8rem; margin-bottom: 14px; }
+      .feature-name { font-size: 0.75rem; letter-spacing: 0.2em; color: #0ff; text-transform: uppercase; margin-bottom: 10px; }
+      .feature-desc { font-size: 0.7rem; color: rgba(0,255,255,0.5); line-height: 1.8; letter-spacing: 0.05em; font-family: monospace; }
+      
+      /* FRACTALS TABLE */
+      .fractals { background: rgba(5,5,20,0.95); padding: 80px 20px; }
+      .fractals-inner { max-width: 900px; margin: 0 auto; }
+      table { width: 100%; border-collapse: collapse; }
+      th { font-size: 0.6rem; letter-spacing: 0.3em; color: rgba(139,0,255,0.6); text-align: left; padding: 12px 16px; border-bottom: 1px solid rgba(139,0,255,0.2); text-transform: uppercase; }
+      td { font-size: 0.65rem; color: rgba(0,255,255,0.7); padding: 14px 16px; border-bottom: 1px solid rgba(139,0,255,0.1); font-family: monospace; letter-spacing: 0.05em; }
+      tr:hover td { color: #0ff; background: rgba(139,0,255,0.05); }
+      .tag { display: inline-block; background: rgba(139,0,255,0.15); border: 1px solid rgba(139,0,255,0.3); border-radius: 3px; padding: 2px 7px; font-size: 0.55rem; letter-spacing: 0.15em; color: #8b00ff; margin-right: 4px; }
+      
+      /* CTA */
+      .cta { padding: 80px 20px; text-align: center; }
+      .cta-title { font-size: clamp(1.2rem, 4vw, 2.5rem); font-weight: 700; letter-spacing: 0.15em; color: #0ff; margin-bottom: 16px; }
+      .cta-sub { font-size: 0.7rem; color: rgba(139,0,255,0.6); letter-spacing: 0.2em; margin-bottom: 40px; }
+      .btn-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+      .btn {
+        display: inline-block; font-family: 'Orbitron', sans-serif; font-size: 0.65rem;
+        letter-spacing: 0.25em; text-transform: uppercase; text-decoration: none;
+        padding: 14px 32px; border-radius: 4px; transition: all 0.25s; cursor: pointer; border: none;
+      }
+      .btn-primary { background: rgba(0,255,255,0.1); border: 1px solid rgba(0,255,255,0.5); color: #0ff; }
+      .btn-primary:hover { background: rgba(0,255,255,0.2); box-shadow: 0 0 20px rgba(0,255,255,0.3); }
+      .btn-secondary { background: rgba(139,0,255,0.1); border: 1px solid rgba(139,0,255,0.5); color: #8b00ff; }
+      .btn-secondary:hover { background: rgba(139,0,255,0.2); box-shadow: 0 0 20px rgba(139,0,255,0.3); }
+      
+      /* FOOTER */
+      footer { padding: 30px 20px; text-align: center; border-top: 1px solid rgba(139,0,255,0.15); }
+      footer p { font-size: 0.6rem; color: rgba(139,0,255,0.4); letter-spacing: 0.2em; }
+      footer a { color: rgba(0,255,255,0.5); text-decoration: none; }
+      footer a:hover { color: #0ff; }
+    </style>
+  </head>
+  <body>
+
+    <!-- HERO -->
+    <section class="hero">
+      <iframe src="index.html" title="fractal37 live preview" loading="lazy"></iframe>
+      <div class="hero-overlay">
+        <h1 class="hero-title">fractal37</h1>
+        <p class="hero-sub">Interactive 3D Fractal Explorer &nbsp;//&nbsp; WebGL Ray Marching</p>
+        <p class="hero-hint">↑ Live — tap the fractal or press C for controls</p>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features">
+      <div class="features-inner">
+        <p class="section-title">// Features</p>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🌀</div>
+            <div class="feature-name">7 Fractal Types</div>
+            <div class="feature-desc">Mandelbulb · Mandelbox · Torus Knot · Apollonian · Julia 3D · Sierpinski Tetra · Menger Sponge</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎨</div>
+            <div class="feature-name">9 Color Palettes</div>
+            <div class="feature-desc">Blade Runner · Cyber · Neon Trout · Heat · Frost · Monochrome · Neon Blue · Magenta Cyan · CGA Retro</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-name">Real-Time GPU</div>
+            <div class="feature-desc">Full WebGL 1.0 fragment shader pipeline. Ray marching with 150 steps, normal estimation, Fresnel, specular, and post-processing — all on the GPU.</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📦</div>
+            <div class="feature-name">Zero Dependencies</div>
+            <div class="feature-desc">The entire explorer is a single self-contained HTML file. No npm, no bundler, no server. Open and run.</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎛️</div>
+            <div class="feature-name">30+ Parameters</div>
+            <div class="feature-desc">Animation speed, rotation, morph, power, lighting, fog, specular, glow, saturation, contrast, FOV, pixelate, vignette — all live, no reload.</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <div class="feature-name">Touch &amp; Mobile</div>
+            <div class="feature-desc">Tap anywhere to open controls. Works on iOS and Android. Responsive layout adapts to any screen size.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FRACTAL TABLE -->
+    <section class="fractals">
+      <div class="fractals-inner">
+        <p class="section-title">// Fractal Types</p>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Technique</th><th>Character</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Mandelbulb</td><td>Spherical power iteration SDF</td><td><span class="tag">organic</span><span class="tag">classic</span></td></tr>
+            <tr><td>Mandelbox</td><td>Box-fold + sphere-fold IFS</td><td><span class="tag">angular</span><span class="tag">crystalline</span></td></tr>
+            <tr><td>Torus Knot</td><td>Angular-sampled curve SDF</td><td><span class="tag">smooth</span><span class="tag">flowing</span></td></tr>
+            <tr><td>Apollonian</td><td>Modular inversion IFS</td><td><span class="tag">gasket</span><span class="tag">infinite</span></td></tr>
+            <tr><td>Julia 3D</td><td>Quaternion iteration DE</td><td><span class="tag">morphing</span><span class="tag">alien</span></td></tr>
+            <tr><td>Sierpinski Tetra</td><td>Attractor-fold IFS</td><td><span class="tag">geometric</span><span class="tag">sharp</span></td></tr>
+            <tr><td>Menger Sponge</td><td>Recursive cube subtraction</td><td><span class="tag">lattice</span><span class="tag">minimal</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+      <h2 class="cta-title">Ready to Explore?</h2>
+      <p class="cta-sub">Open the standalone file or clone the repo</p>
+      <div class="btn-row">
+        <a href="index.html" class="btn btn-primary">Launch Explorer</a>
+        <a href="https://github.com/issues37/fractal37" class="btn btn-secondary">View on GitHub</a>
+        <a href="docs/index.md" class="btn btn-secondary">Documentation</a>
+      </div>
+    </section>
+
+    <footer>
+      <p>fractal37 &nbsp;·&nbsp; MIT License &nbsp;·&nbsp; <a href="https://github.com/issues37/fractal37">github.com/issues37/fractal37</a></p>
+    </footer>
+
+  </body>
+  </html>
