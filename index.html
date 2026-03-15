@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Fractal Renderer /// フラクタル レンダラー</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
+            color: #0ff;
+        }
+        
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.18) 2px,
+                rgba(0, 0, 0, 0.18) 4px
+            );
+            z-index: 100;
+            pointer-events: none;
+            opacity: 1;
+        }
+        
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.8) 100%);
+            z-index: 50;
+            pointer-events: none;
+        }
+        
+        92% { transform: translate(-2px, 1px); opacity: 0.8; }
+            94% { transform: translate(2px, -1px); opacity: 0.9; }
+            96% { transform: translate(-1px, 2px); opacity: 0.7; }
+            98% { transform: translate(1px, -2px); opacity: 0.8; }
+        }
+        
+        50% { opacity: 0.4; }
+        }
+        
+        .control-toggle-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            font-size: 11px;
+            color: rgba(139, 0, 255, 0.6);
+            letter-spacing: 2px;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .control-panel {
+            position: fixed;
+            top: 50%;
+            width: 300px;
+            max-height: 88vh;
+            background: rgba(5, 5, 20, 0.88);
+            border: 1px solid rgba(139, 0, 255, 0.4);
+            padding: 20px;
+            z-index: 200;
+            pointer-events: auto;
+            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            backdrop-filter: blur(12px);
+        }
+
+        .control-panel-left {
+            left: 0;
+            transform: translateY(-50%) translateX(-100%);
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .control-panel-right {
+            right: 0;
+            transform: translateY(-50%) translateX(100%);
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .control-panel-left.visible {
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .control-panel-right.visible {
+            transform: translateY(-50%) translateX(0);
+        }
+        
+        .control-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(139, 0, 255, 0.3);
+        }
+        
+        .control-panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: #00ffff;
+        }
+        
+        .control-panel-close {
+            background: none;
+            border: 1px solid rgba(139, 0, 255, 0.5);
+            color: #8b00ff;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .control-panel-close:hover {
+            background: rgba(139, 0, 255, 0.3);
+            color: #ff00ff;
+        }
+        
+        .control-section {
+            margin-bottom: 18px;
+        }
+        
+        .control-section-title {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #8b00ff;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            opacity: 0.8;
+        }
+        
+        .control-row {
+            margin-bottom: 12px;
+        }
+        
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        
+        .control-label-text {
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: #00ffff;
+            text-transform: uppercase;
+        }
+        
+        .control-value {
+            font-size: 11px;
+            color: #ff00ff;
+            font-family: 'Orbitron', monospace;
+            min-width: 50px;
+            text-align: right;
+        }
+        
+        .control-value-input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(139, 0, 255, 0.3);
+            color: #ff00ff;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            padding: 3px 6px;
+            width: 60px;
+            text-align: right;
+            border-radius: 3px;
+        }
+        
+        .control-value-input:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(90deg, rgba(139, 0, 255, 0.3), rgba(0, 255, 255, 0.3));
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: linear-gradient(135deg, #00ffff, #8b00ff);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: linear-gradient(135deg, #00ffff, #8b00ff);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        select.control-select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(139, 0, 255, 0.3);
+            color: #00ffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        select.control-select:focus {
+            outline: none;
+            border-color: #00ffff;
+        }
+        
+        select.control-select option {
+            background: #0a0a1a;
+            color: #00ffff;
+        }
+        
+        .control-row-inline {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .control-row-inline .control-label-text {
+            min-width: 80px;
+        }
+
+        /* Custom themed scrollbars for control panels */
+        .control-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        .control-panel::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 3px;
+            border: 1px solid rgba(139, 0, 255, 0.15);
+        }
+        .control-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #8b00ff 0%, #00ffff 50%, #ff00ff 100%);
+            border-radius: 3px;
+            box-shadow: 0 0 6px rgba(0, 255, 255, 0.5), 0 0 12px rgba(139, 0, 255, 0.4);
+        }
+        .control-panel::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #aa44ff 0%, #44ffff 50%, #ff44ff 100%);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(139, 0, 255, 0.6);
+        }
+        /* Firefox */
+        .control-panel {
+            scrollbar-width: thin;
+            scrollbar-color: #8b00ff rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="vignette"></div>
+    <div class="scanline"></div>
+    
+    <div class="control-toggle-hint" id="toggleHint">[ C ] or TAP · コントロール</div>
+    
+    <!-- LEFT PANEL: Animation + Fractal -->
+    <div class="control-panel control-panel-left" id="controlPanelLeft">
+        <div class="control-panel-header">
+            <span class="control-panel-title">アニメーション &amp; フラクタル<br><span style="font-size:10px;color:#8b00ff;letter-spacing:2px;">ANIMATION &amp; FRACTAL</span></span>
+            <button class="control-panel-close" id="closePanelLeft">×</button>
+        </div>
+        
+        <div class="control-section">
+            <div class="control-section-title">アニメーション &nbsp;<span style="color:#ff00ff;font-size:9px;">ANIMATION</span></div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">速度 <span style="color:#ff00ff;font-size:9px;">SPEED</span></span>
+                    <input type="number" class="control-value-input" id="animSpeedVal" value="0.15" step="0.01">
+                </div>
+                <input type="range" id="animSpeed" min="0" max="1" step="0.01" value="0.15">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">回転速度 <span style="color:#ff00ff;font-size:9px;">ROT SPEED</span></span>
+                    <input type="number" class="control-value-input" id="rotSpeedVal" value="0.3" step="0.01">
+                </div>
+                <input type="range" id="rotSpeed" min="0" max="2" step="0.01" value="0.3">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">変異速度 <span style="color:#ff00ff;font-size:9px;">MORPH</span></span>
+                    <input type="number" class="control-value-input" id="morphSpeedVal" value="0.3" step="0.01">
+                </div>
+                <input type="range" id="morphSpeed" min="0" max="2" step="0.01" value="0.3">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">変異位置 <span style="color:#ff00ff;font-size:9px;">MORPH OFFSET</span></span>
+                    <input type="number" class="control-value-input" id="morphOffsetVal" value="0" step="0.01">
+                </div>
+                <input type="range" id="morphOffset" min="0" max="6.28" step="0.01" value="0">
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <div class="control-section-title">フラクタル &nbsp;<span style="color:#ff00ff;font-size:9px;">FRACTAL</span></div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">反復回数 <span style="color:#ff00ff;font-size:9px;">ITERATIONS</span></span>
+                    <input type="number" class="control-value-input" id="maxIterVal" value="12" step="1">
+                </div>
+                <input type="range" id="maxIter" min="4" max="20" step="1" value="12">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">べき乗 <span style="color:#ff00ff;font-size:9px;">POWER</span></span>
+                    <input type="number" class="control-value-input" id="powerVal" value="8" step="0.1">
+                </div>
+                <input type="range" id="power" min="2" max="16" step="0.1" value="8">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">サイズ <span style="color:#ff00ff;font-size:9px;">SIZE</span></span>
+                    <input type="number" class="control-value-input" id="fractalSizeVal" value="1" step="0.1">
+                </div>
+                <input type="range" id="fractalSize" min="0.1" max="3" step="0.1" value="1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">フラクタルタイプ <span style="color:#ff00ff;font-size:9px;">TYPE</span></span>
+                </div>
+                <select class="control-select" id="fractalType">
+                    <option value="0">マンデルブルー (Mandelbulb)</option>
+                    <option value="1">マンデルボックス (Mandelbox)</option>
+                    <option value="2">トーラスノット (Torus Knot)</option>
+                    <option value="3">アポロニアン (Apollonian)</option>
+                    <option value="4">ジュリア 3D (Julia 3D)</option>
+                    <option value="5">四面体 (Sierpinski Tetra)</option>
+                    <option value="6">メンガースポンジ (Menger Sponge)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-section">
+            <div class="control-section-title">ライティング &nbsp;<span style="color:#ff00ff;font-size:9px;">LIGHTING &amp; DEPTH</span></div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">光角度 <span style="color:#ff00ff;font-size:9px;">LIGHT ANGLE</span></span>
+                    <input type="number" class="control-value-input" id="lightAngleVal" value="1.0" step="0.1">
+                </div>
+                <input type="range" id="lightAngle" min="0" max="6.28" step="0.05" value="1.0">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">環境光 <span style="color:#ff00ff;font-size:9px;">AMBIENT</span></span>
+                    <input type="number" class="control-value-input" id="ambientVal" value="0.3" step="0.05">
+                </div>
+                <input type="range" id="ambient" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">エッジフォグ <span style="color:#ff00ff;font-size:9px;">EDGE FOG</span></span>
+                    <input type="number" class="control-value-input" id="edgeFogVal" value="0.5" step="0.05">
+                </div>
+                <input type="range" id="edgeFog" min="0" max="1" step="0.01" value="0.5">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">スペキュラー <span style="color:#ff00ff;font-size:9px;">SPECULAR</span></span>
+                    <input type="number" class="control-value-input" id="specularVal" value="0.5" step="0.05">
+                </div>
+                <input type="range" id="specular" min="0" max="2" step="0.05" value="0.5">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">フォグ距離 <span style="color:#ff00ff;font-size:9px;">FOG DIST</span></span>
+                    <input type="number" class="control-value-input" id="fogDistVal" value="10" step="0.5">
+                </div>
+                <input type="range" id="fogDist" min="1" max="20" step="0.5" value="10">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">ステップサイズ <span style="color:#ff00ff;font-size:9px;">STEP SIZE</span></span>
+                    <input type="number" class="control-value-input" id="stepSizeVal" value="0.8" step="0.05">
+                </div>
+                <input type="range" id="stepSize" min="0.3" max="1.2" step="0.05" value="0.8">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">コントラスト <span style="color:#ff00ff;font-size:9px;">CONTRAST</span></span>
+                    <input type="number" class="control-value-input" id="contrastVal" value="1.0" step="0.05">
+                </div>
+                <input type="range" id="contrast" min="0.5" max="3" step="0.05" value="1.0">
+            </div>
+        </div>
+    </div>
+    <div class="control-panel control-panel-right" id="controlPanelRight">
+        <div class="control-panel-header">
+            <span class="control-panel-title">カメラ &amp; カラー<br><span style="font-size:10px;color:#8b00ff;letter-spacing:2px;">CAMERA &amp; COLOR</span></span>
+            <button class="control-panel-close" id="closePanelRight">×</button>
+        </div>
+
+        <div class="control-section">
+            <div class="control-section-title">カメラ &nbsp;<span style="color:#ff00ff;font-size:9px;">CAMERA</span></div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">X軸回転 <span style="color:#ff00ff;font-size:9px;">ROTATE X</span></span>
+                    <input type="number" class="control-value-input" id="rotateXVal" value="0" step="0.05">
+                </div>
+                <input type="range" id="rotateX" min="0" max="6.28" step="0.01" value="0">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">Y軸回転 <span style="color:#ff00ff;font-size:9px;">ROTATE Y</span></span>
+                    <input type="number" class="control-value-input" id="rotateYVal" value="0" step="0.05">
+                </div>
+                <input type="range" id="rotateY" min="0" max="6.28" step="0.01" value="0">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">視野 <span style="color:#ff00ff;font-size:9px;">FIELD OF VIEW</span></span>
+                    <input type="number" class="control-value-input" id="fovVal" value="1" step="0.1">
+                </div>
+                <input type="range" id="fov" min="0.5" max="2" step="0.1" value="1">
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <div class="control-section-title">カラー &nbsp;<span style="color:#ff00ff;font-size:9px;">COLOR</span></div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">彩度 <span style="color:#ff00ff;font-size:9px;">SATURATION</span></span>
+                    <input type="number" class="control-value-input" id="saturationVal" value="1" step="0.1">
+                </div>
+                <input type="range" id="saturation" min="0" max="2" step="0.1" value="1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">輝度 <span style="color:#ff00ff;font-size:9px;">BRIGHTNESS</span></span>
+                    <input type="number" class="control-value-input" id="brightnessVal" value="1.2" step="0.1">
+                </div>
+                <input type="range" id="brightness" min="0.1" max="3" step="0.1" value="1.2">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">色深度 <span style="color:#ff00ff;font-size:9px;">COLOR DEPTH</span></span>
+                    <input type="number" class="control-value-input" id="colorDepthVal" value="0.5" step="0.1">
+                </div>
+                <input type="range" id="colorDepth" min="0" max="2" step="0.1" value="0.5">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">パレット <span style="color:#ff00ff;font-size:9px;">PALETTE</span></span>
+                </div>
+                <select class="control-select" id="palette">
+                    <option value="0">ブレードランナー (Blade Runner)</option>
+                    <option value="1">サイバー (Cyber)</option>
+                    <option value="2">ネオントラウト (Neon Trout)</option>
+                    <option value="3">ヒート (Heat)</option>
+                    <option value="4">フロスト (Frost)</option>
+                    <option value="5">モノクロ (Monochrome)</option>
+                    <option value="6">ネオンブルー (Neon Blue)</option>
+                    <option value="7">マゼンタシアン (Magenta Cyan)</option>
+                    <option value="8">CGA レトロ (CGA Retro)</option>
+                </select>
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">パレット位置 <span style="color:#ff00ff;font-size:9px;">PALETTE OFFSET</span></span>
+                    <input type="number" class="control-value-input" id="paletteOffsetVal" value="0" step="0.1">
+                </div>
+                <input type="range" id="paletteOffset" min="0" max="6.28" step="0.01" value="0">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">ループ速度 <span style="color:#ff00ff;font-size:9px;">CYCLE SPEED</span></span>
+                    <input type="number" class="control-value-input" id="paletteSpeedVal" value="0.15" step="0.01">
+                </div>
+                <input type="range" id="paletteSpeed" min="0" max="2" step="0.01" value="0.15">
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <div class="control-section-title">レンダリング &nbsp;<span style="color:#ff00ff;font-size:9px;">RENDERING</span></div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">滑らかさ <span style="color:#ff00ff;font-size:9px;">SMOOTHNESS</span></span>
+                    <input type="number" class="control-value-input" id="smoothnessVal" value="20" step="1">
+                </div>
+                <input type="range" id="smoothness" min="1" max="50" step="1" value="20">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">発光 <span style="color:#ff00ff;font-size:9px;">GLOW</span></span>
+                    <input type="number" class="control-value-input" id="glowVal" value="2" step="0.1">
+                </div>
+                <input type="range" id="glow" min="0" max="5" step="0.1" value="2">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">ピクセル化 <span style="color:#ff00ff;font-size:9px;">PIXELATE</span></span>
+                    <input type="number" class="control-value-input" id="pixelateVal" value="1" step="1">
+                </div>
+                <input type="range" id="pixelate" min="1" max="32" step="1" value="1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">ビネット <span style="color:#ff00ff;font-size:9px;">VIGNETTE</span></span>
+                    <input type="number" class="control-value-input" id="vignetteVal" value="0.5" step="0.1">
+                </div>
+                <input type="range" id="vignette" min="0" max="1" step="0.05" value="0.5">
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <div class="control-section-title">エフェクト &nbsp;<span style="color:#ff00ff;font-size:9px;">EFFECTS</span></div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">スキャンライン <span style="color:#ff00ff;font-size:9px;">SCANLINE</span></span>
+                </div>
+                <input type="range" id="scanline" min="0" max="1" step="0.1" value="1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span class="control-label-text">グロー強度 <span style="color:#ff00ff;font-size:9px;">GLOW INTENSITY</span></span>
+                    <input type="number" class="control-value-input" id="glowIntensityVal" value="2" step="0.1">
+                </div>
+                <input type="range" id="glowIntensity" min="0" max="5" step="0.1" value="2">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        
+        if (!gl) {
+            alert('WebGL not supported');
+        }
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        const params = {
+            animSpeed: 0.15,
+            rotSpeed: 0.3,
+            morphSpeed: 0.3,
+            morphOffset: 0,
+            maxIter: 12,
+            power: 8,
+            fractalSize: 1,
+            fractalType: 0,
+            rotateX: 0,
+            rotateY: 0,
+            fov: 1,
+            saturation: 1,
+            brightness: 1.2,
+            colorDepth: 0.5,
+            palette: 0,
+            smoothness: 20,
+            glow: 2,
+            pixelate: 1,
+            vignette: 0.5,
+            scanline: 1,
+            glowIntensity: 2,
+            paletteOffset: 0,
+            paletteSpeed: 0.15,
+            // Extra fractal params
+            lightAngle: 1.0,
+            ambient: 0.3,
+            edgeFog: 0.5,
+            specular: 0.5,
+            fogDist: 10.0,
+            stepSize: 0.8,
+            contrast: 1.0
+        };
+        
+        const vertexShaderSource = `
+            attribute vec2 position;
+            void main() {
+                gl_Position = vec4(position, 0.0, 1.0);
+            }
+        `;
+        
+        const fragmentShaderSource = `
+            precision highp float;
+            
+            uniform vec2 resolution;
+            uniform float time;
+            
+            uniform float u_animSpeed;
+            uniform float u_rotSpeed;
+            uniform float u_morphPhase;
+            uniform float u_maxIter;
+            uniform float u_power;
+            uniform float u_fractalSize;
+            uniform float u_fractalType;
+            uniform float u_rotateX;
+            uniform float u_rotateY;
+            uniform float u_fov;
+            uniform float u_saturation;
+            uniform float u_brightness;
+            uniform float u_colorDepth;
+            uniform float u_palette;
+            uniform float u_smoothness;
+            uniform float u_glow;
+            uniform float u_dither;
+            uniform float u_vignette;
+            uniform float u_glowIntensity;
+            uniform float u_paletteOffset;
+            uniform float u_paletteSpeed;
+            uniform float u_lightAngle;
+            uniform float u_ambient;
+            uniform float u_edgeFog;
+            uniform float u_pixelate;
+            uniform float u_specular;
+            uniform float u_fogDist;
+            uniform float u_stepSize;
+            uniform float u_contrast;
+            
+            mat2 rotate2d(float angle) {
+                float s = sin(angle);
+                float c = cos(angle);
+                return mat2(c, -s, s, c);
+            }
+            
+            // Cosine-basis palette (Inigo Quilez) — mathematically seamless, no fract() seams
+            // color(t) = a + b * cos(2π(c*t + d))  — infinite, smooth, zero hard edges
+            vec3 cosPalette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
+                return clamp(a + b * cos(6.28318 * (c * t + d)), 0.0, 1.0);
+            }
+
+            // Blade Runner: deep purples, electric blue, crimson — noir cyberpunk
+            vec3 paletteBladeRunner(float t) {
+                return cosPalette(t,
+                    vec3(0.35, 0.10, 0.45),   // a: midpoint (deep purple)
+                    vec3(0.35, 0.10, 0.40),   // b: amplitude
+                    vec3(0.70, 0.90, 0.60),   // c: frequency per channel
+                    vec3(0.00, 0.30, 0.60)    // d: phase offset
+                );
+            }
+
+            // Cyber: cyan → magenta → electric yellow — high-energy neon
+            vec3 paletteCyber(float t) {
+                return cosPalette(t,
+                    vec3(0.50, 0.50, 0.50),
+                    vec3(0.50, 0.50, 0.50),
+                    vec3(1.00, 0.70, 0.40),
+                    vec3(0.00, 0.15, 0.50)
+                );
+            }
+
+            // Neon Trout: vivid pink → teal → orange — pure neon fever dream
+            vec3 paletteNeon(float t) {
+                return cosPalette(t,
+                    vec3(0.60, 0.30, 0.60),
+                    vec3(0.40, 0.40, 0.40),
+                    vec3(0.80, 1.00, 0.50),
+                    vec3(0.00, 0.50, 0.75)
+                );
+            }
+
+            // Heat: black → deep red → orange → white — plasma forge
+            vec3 paletteHeat(float t) {
+                return cosPalette(t,
+                    vec3(0.50, 0.20, 0.10),
+                    vec3(0.50, 0.20, 0.10),
+                    vec3(0.50, 0.60, 0.80),
+                    vec3(0.00, 0.20, 0.55)
+                );
+            }
+
+            // Frost: midnight navy → ice blue → silver white — arctic light
+            vec3 paletteFrost(float t) {
+                return cosPalette(t,
+                    vec3(0.25, 0.45, 0.65),
+                    vec3(0.25, 0.35, 0.35),
+                    vec3(0.60, 0.50, 0.40),
+                    vec3(0.50, 0.20, 0.00)
+                );
+            }
+
+            // Monochrome: smooth silver sine wave — clean and structural
+            vec3 paletteMono(float t) {
+                return cosPalette(t,
+                    vec3(0.50, 0.50, 0.50),
+                    vec3(0.45, 0.45, 0.45),
+                    vec3(1.00, 1.00, 1.00),
+                    vec3(0.00, 0.05, 0.10)
+                );
+            }
+
+            // Neon Blue: deep black → electric blue → white-blue — cold voltage
+            vec3 paletteNeonBlue(float t) {
+                return cosPalette(t,
+                    vec3(0.05, 0.15, 0.50),
+                    vec3(0.05, 0.15, 0.50),
+                    vec3(0.80, 0.70, 0.60),
+                    vec3(0.00, 0.10, 0.40)
+                );
+            }
+
+            // Magenta Cyan: pure magenta → cyan → white — neon duality
+            vec3 paletteMagentaCyan(float t) {
+                return cosPalette(t,
+                    vec3(0.60, 0.30, 0.60),
+                    vec3(0.40, 0.30, 0.40),
+                    vec3(0.50, 1.00, 0.50),
+                    vec3(0.50, 0.00, 0.25)
+                );
+            }
+
+            // CGA: classic 4-color cyan/magenta/white/black palette — retro PC
+            vec3 paletteCGA(float t) {
+                // Quantize to 4 CGA mode4 pal1 colors
+                float q = floor(mod(t * 2.0, 4.0));
+                if (q < 1.0) return vec3(0.0, 0.0, 0.0);          // black
+                else if (q < 2.0) return vec3(0.0, 0.67, 0.67);   // cyan
+                else if (q < 3.0) return vec3(0.67, 0.0, 0.67);   // magenta
+                else return vec3(0.67, 0.67, 0.67);                // light grey/white
+            }
+
+            vec3 getPalette(float t) {
+                int p = int(u_palette);
+                if (p == 0) return paletteBladeRunner(t);
+                else if (p == 1) return paletteCyber(t);
+                else if (p == 2) return paletteNeon(t);
+                else if (p == 3) return paletteHeat(t);
+                else if (p == 4) return paletteFrost(t);
+                else if (p == 5) return paletteMono(t);
+                else if (p == 6) return paletteNeonBlue(t);
+                else if (p == 7) return paletteMagentaCyan(t);
+                else return paletteCGA(t);
+            }
+            
+            float mandelbulbDE(vec3 pos) {
+                vec3 z = pos;
+                float dr = 1.0;
+                float r = 0.0;
+                float power = u_power + sin(u_morphPhase) * 0.5;
+                int maxI = int(u_maxIter);
+                
+                for (int i = 0; i < 20; i++) {
+                    if (i >= maxI) break;
+                    r = length(z);
+                    if (r > 4.0) break;
+                    
+                    float theta = acos(z.z / r);
+                    float phi = atan(z.y, z.x);
+                    dr = pow(r, power - 1.0) * power * dr + 1.0;
+                    
+                    float zr = pow(r, power);
+                    theta = theta * power;
+                    phi = phi * power;
+                    
+                    z = zr * vec3(
+                        sin(theta) * cos(phi),
+                        sin(phi) * sin(theta),
+                        cos(theta)
+                    );
+                    z += pos;
+                }
+                return 0.5 * log(r) * r / dr;
+            }
+            
+            float mandelboxDE(vec3 pos) {
+                vec3 z = pos;
+                float dr = 1.0;
+                float minRadius2 = 0.25;
+                float fixedRadius2 = 1.0;
+                float foldLimit = 1.0;
+                float scale = u_power * 0.5 + 1.5; // scale driven by power param
+                // morph: slowly drift the fold limit over time
+                foldLimit = 1.0 + sin(u_morphPhase * 0.5) * 0.15;
+                
+                for (int i = 0; i < 10; i++) {
+                    // Box fold
+                    z = clamp(z, -foldLimit, foldLimit) * 2.0 - z;
+                    
+                    // Sphere fold
+                    float r2 = dot(z, z);
+                    if (r2 < minRadius2) {
+                        float t2 = fixedRadius2 / minRadius2;
+                        z *= t2;
+                        dr *= t2;
+                    } else if (r2 < fixedRadius2) {
+                        float t2 = fixedRadius2 / r2;
+                        z *= t2;
+                        dr *= t2;
+                    }
+                    
+                    z = z * scale + pos;
+                    dr = dr * abs(scale) + 1.0;
+                    
+                    if (dot(z, z) > 64.0) break;
+                }
+                return length(z) / abs(dr);
+            }
+            
+            float torusKnotDE(vec3 pos) {
+                // Stable torus knot SDF via brute-force angular sampling.
+                // No Newton iterations = no divergence or dark artifacts.
+                float morphT = u_morphPhase * 0.08;
+                float kp = 2.0 + sin(morphT * 0.31) + 1.0;
+                float kq = 3.0 + sin(morphT * 0.19) * 1.2;
+                float R = 0.85;
+                float r = 0.38;
+                float tubeR = 0.16 + sin(morphT * 0.7) * 0.03;
+                float best = 1e9;
+                for (int i = 0; i < 48; i++) {
+                    float phi = 6.28318 * float(i) / 48.0;
+                    float sa  = phi * kq / kp;
+                    vec3 sp = vec3(
+                        (R + r * cos(sa)) * cos(phi),
+                        (R + r * cos(sa)) * sin(phi),
+                        r * sin(sa)
+                    );
+                    best = min(best, length(pos - sp));
+                }
+                return best - tubeR;
+            }
+
+            float apollonianDE(vec3 pos) {
+                // Apollonian gasket IFS — nested kissing spheres
+                vec3 z = pos;
+                float scale = 2.0 + sin(u_morphPhase * 0.25) * 0.3;
+                float dr = 1.0;
+
+                for (int i = 0; i < 10; i++) {
+                    z = abs(z);
+
+                    // Fold along XY diagonal
+                    if (z.x - z.y < 0.0) z.xy = z.yx;
+                    if (z.x - z.z < 0.0) z.xz = z.zx;
+                    if (z.y - z.z < 0.0) z.yz = z.zy;
+
+                    // Sphere inversion
+                    float r2 = dot(z, z);
+                    float k  = max(1.0 / r2, 1.0);
+                    z  *= k;
+                    dr *= k;
+
+                    // Translate, scale
+                    z  = z * scale - vec3(scale - 1.0);
+                    dr = dr * scale + 1.0;
+
+                    if (dot(z, z) > 64.0) break;
+                }
+                return length(z) / abs(dr);
+            }
+
+            // Quaternion Julia set rendered as a 3-D slice (vary w over time)
+            vec3 qmul(vec4 q, vec4 r) {
+                return vec3(
+                    q.x*r.x - q.y*r.y - q.z*r.z - q.w*r.w,
+                    q.x*r.y + q.y*r.x + q.z*r.w - q.w*r.z,
+                    q.x*r.z - q.y*r.w + q.z*r.x + q.w*r.y
+                );
+            }
+
+            float juliaDE(vec3 pos) {
+                // Quaternion Julia set — c rotates in the W plane over time
+                float cAngle = u_morphPhase * 0.18;
+                vec4 c = vec4(-0.2, 0.6 + sin(cAngle)*0.2, 0.2, cos(cAngle)*0.3);
+                vec4 z4 = vec4(pos, 0.0);
+                float dr = 1.0;
+
+                for (int i = 0; i < 12; i++) {
+                    dr = 2.0 * length(z4) * dr;
+                    // Quaternion squaring: z -> z*z
+                    z4 = vec4(
+                        z4.x*z4.x - z4.y*z4.y - z4.z*z4.z - z4.w*z4.w,
+                        2.0*z4.x*z4.y,
+                        2.0*z4.x*z4.z,
+                        2.0*z4.x*z4.w
+                    ) + c;
+                    if (dot(z4, z4) > 4.0) break;
+                }
+                float r = length(z4);
+                return 0.5 * log(r) * r / dr;
+            }
+
+            float sierpinskiDE(vec3 pos) {
+                // Sierpinski Tetrahedron IFS
+                vec3 z = pos;
+                float scale = 2.0;
+                float dr = 1.0;
+                float twist = u_morphPhase * 0.15;
+                mat2 twRot = mat2(cos(twist), -sin(twist), sin(twist), cos(twist));
+
+                // Tetrahedron vertices
+                vec3 v1 = vec3( 1.0,  1.0, -1.0);
+                vec3 v2 = vec3(-1.0, -1.0, -1.0);
+                vec3 v3 = vec3( 1.0, -1.0,  1.0);
+                vec3 v4 = vec3(-1.0,  1.0,  1.0);
+
+                for (int i = 0; i < 12; i++) {
+                    z.xy *= twRot;
+
+                    // Fold: reflect toward nearest tetrahedron vertex
+                    vec3 best = v1;
+                    float bd = dot(z - v1, z - v1);
+                    float d2;
+
+                    d2 = dot(z - v2, z - v2);
+                    if (d2 < bd) { bd = d2; best = v2; }
+                    d2 = dot(z - v3, z - v3);
+                    if (d2 < bd) { bd = d2; best = v3; }
+                    d2 = dot(z - v4, z - v4);
+                    if (d2 < bd) { best = v4; }
+
+                    z  = z * scale - best * (scale - 1.0);
+                    dr = dr * scale;
+
+                    if (dot(z, z) > 64.0) break;
+                }
+                return length(z) / abs(dr);
+            }
+            
+            float mengerDE(vec3 pos) {
+                // Menger Sponge IFS — infinite cross-shaped holes
+                vec3 z = pos;
+                float scale = 3.0;
+                float dr = 1.0;
+                float twist = u_morphPhase * 0.08;
+                mat2 twRot = mat2(cos(twist), -sin(twist), sin(twist), cos(twist));
+
+                for (int i = 0; i < 5; i++) {
+                    z = abs(z);
+                    z.xy *= twRot;
+                    z.xz *= twRot;
+
+                    // Fold: sort axes so z.x >= z.y >= z.z
+                    if (z.x < z.y) z.xy = z.yx;
+                    if (z.x < z.z) z.xz = z.zx;
+                    if (z.y < z.z) z.yz = z.zy;
+
+                    z = z * scale - vec3(scale - 1.0);
+                    dr *= scale;
+
+                    // Undo over-contraction on z axis
+                    if (z.z < -0.5*(scale-1.0)) z.z += scale - 1.0;
+
+                    if (dot(z,z) > 48.0) break;
+                }
+                // Cross SDF in 3 axis planes gives the sponge holes
+                vec3 a = abs(z);
+                float crossDist = max(a.x, max(a.y, a.z));
+                return (crossDist - 1.0) / (dr);
+            }
+            
+            float scene(vec3 p) {
+                float slowTime = time * u_animSpeed;
+                
+                // Continuous rotation — no sin/cos wrapping, just linear time = constant shapeshifting
+                mat2 rotX = rotate2d(slowTime * u_rotSpeed * 0.7 + u_rotateX);
+                mat2 rotY = rotate2d(slowTime * u_rotSpeed * 0.5 * 1.3 + u_rotateY);
+                mat2 rotZ = rotate2d(slowTime * u_rotSpeed * 0.3 * 0.7);
+                
+                p.xz *= rotX;
+                p.yz *= rotY;
+                p.xy *= rotZ;
+                
+                // No pulsation — static scale
+                float scale = u_fractalSize;
+                p /= scale;
+                
+                float d;
+                int ftype = int(u_fractalType);
+                if (ftype == 0) d = mandelbulbDE(p);
+                else if (ftype == 1) d = mandelboxDE(p);
+                else if (ftype == 2) d = torusKnotDE(p);
+                else if (ftype == 3) d = apollonianDE(p);
+                else if (ftype == 4) d = juliaDE(p);
+                else if (ftype == 5) d = sierpinskiDE(p);
+                else d = mengerDE(p);
+                
+                return d * scale;
+            }
+            
+            vec3 getNormal(vec3 p) {
+                float eps = 0.001;
+                return normalize(vec3(
+                    scene(p + vec3(eps, 0, 0)) - scene(p - vec3(eps, 0, 0)),
+                    scene(p + vec3(0, eps, 0)) - scene(p - vec3(0, eps, 0)),
+                    scene(p + vec3(0, 0, eps)) - scene(p - vec3(0, 0, eps))
+                ));
+            }
+            
+            float rand(vec2 co) {
+                return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+            }
+            
+            void main() {
+                // Pixelation: snap fragment coordinate to a coarser grid
+                vec2 fragCoord = gl_FragCoord.xy;
+                if (u_pixelate > 1.0) {
+                    fragCoord = floor(fragCoord / u_pixelate) * u_pixelate + u_pixelate * 0.5;
+                }
+                vec2 uv = (fragCoord - 0.5 * resolution) / resolution.y;
+                uv *= u_fov;
+                
+                // Calm floating camera — stable distance, gentle drift, NO breathing
+                float stableOrbit = 3.2;
+                float driftTime = time * u_animSpeed * 0.25;
+
+                // Very gentle sideways + vertical float using layered low-freq sines
+                float camX = sin(driftTime * 0.41) * 0.18 + sin(driftTime * 0.17) * 0.09;
+                float camY = sin(driftTime * 0.29) * 0.12 + cos(driftTime * 0.13) * 0.06;
+                // No depth breathing — constant orbit distance
+                float camZ = stableOrbit;
+
+                vec3 ro = vec3(camX, camY, camZ);
+                vec3 target = vec3(0.0);
+                
+                vec3 forward = normalize(target - ro);
+                vec3 right = normalize(cross(vec3(0, 1, 0), forward));
+                vec3 up = cross(forward, right);
+                
+                vec3 rd = normalize(forward + uv.x * right + uv.y * up);
+                
+                float t = 0.0;
+                float glow = 0.0;
+                float smoothGlow = 0.0;
+                float smoothFactor = u_smoothness;
+                
+                for (int i = 0; i < 150; i++) {
+                    vec3 p = ro + rd * t;
+                    float d = scene(p);
+                    
+                    float glowContrib = exp(-d * smoothFactor) * 0.015;
+                    smoothGlow += glowContrib;
+                    glow += exp(-d * 20.0) * 0.02;
+                    
+                    if (d < 0.001 || t > 15.0) break;
+                    t += d * u_stepSize;
+                }
+                
+                vec3 color = vec3(0.0);
+                
+                if (t < 15.0) {
+                    vec3 p = ro + rd * t;
+                    vec3 n = getNormal(p);
+                    
+                    vec3 lightDir = normalize(vec3(cos(u_lightAngle), sin(u_lightAngle), -1.0));
+                    float diff = max(dot(n, lightDir), 0.0);
+                    float spec = pow(max(dot(reflect(-lightDir, n), -rd), 0.0), 32.0);
+                    
+                    // Palette cycling: linear loop (paletteSpeed) + static offset (paletteOffset)
+                    float colorDrift = time * u_paletteSpeed + u_paletteOffset;
+                    float colorT = length(p) * u_colorDepth * 0.4 + colorDrift;
+                    vec3 baseColor = getPalette(colorT);
+                    
+                    baseColor = mix(vec3(dot(baseColor, vec3(0.299, 0.587, 0.114))), baseColor, u_saturation);
+                    
+                    color = baseColor * (u_ambient + diff * (1.0 - u_ambient));
+                    color += vec3(0.5, 0.0, 1.0) * spec * u_specular;
+                    
+                    float fresnel = pow(1.0 - max(dot(n, -rd), 0.0), 3.0);
+                    color += vec3(0.0, 0.5, 1.0) * fresnel * 0.4;
+                    
+                    // Edge fog
+                    float edgeDark = 1.0 - fresnel * u_edgeFog;
+                    color *= edgeDark;
+                    
+                    // Depth fog: fade to black as surface gets further
+                    float fog = exp(-t * (1.0 / max(u_fogDist, 0.1)));
+                    color = mix(vec3(0.0), color, fog);
+                }
+                
+                color += vec3(0.1, 0.0, 0.3) * glow * u_glowIntensity;
+                
+                // Smooth glow colors — use same drift as surface color
+                float glowDrift = time * u_paletteSpeed + u_paletteOffset;
+                vec3 glowColor1 = getPalette(glowDrift);
+                vec3 glowColor2 = getPalette(glowDrift + 0.5);
+                vec3 glowMix = mix(glowColor1, glowColor2, 0.5);
+                color += glowMix * smoothGlow * u_glow;
+                
+                color = pow(color, vec3(0.8));
+                color *= u_brightness;
+                // Contrast: push darks darker and brights brighter around midpoint 0.5
+                color = (color - 0.5) * u_contrast + 0.5;
+                
+                float vig = 1.0 - length(uv) * u_vignette;
+                color *= vig;
+                
+                color = clamp(color, 0.0, 1.0);
+                
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+        
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+        
+        function createProgram(gl, vertexShader, fragmentShader) {
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Program link error:', gl.getProgramInfoLog(program));
+                gl.deleteProgram(program);
+                return null;
+            }
+            return program;
+        }
+        
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        const program = createProgram(gl, vertexShader, fragmentShader);
+        
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            -1, -1, 1, -1, -1, 1,
+            -1, 1, 1, -1, 1, 1
+        ]), gl.STATIC_DRAW);
+        
+        const positionLocation = gl.getAttribLocation(program, 'position');
+        
+        const uniforms = {
+            resolution: gl.getUniformLocation(program, 'resolution'),
+            time: gl.getUniformLocation(program, 'time'),
+            animSpeed: gl.getUniformLocation(program, 'u_animSpeed'),
+            rotSpeed: gl.getUniformLocation(program, 'u_rotSpeed'),
+            morphPhase: gl.getUniformLocation(program, 'u_morphPhase'),
+            maxIter: gl.getUniformLocation(program, 'u_maxIter'),
+            power: gl.getUniformLocation(program, 'u_power'),
+            fractalSize: gl.getUniformLocation(program, 'u_fractalSize'),
+            fractalType: gl.getUniformLocation(program, 'u_fractalType'),
+            rotateX: gl.getUniformLocation(program, 'u_rotateX'),
+            rotateY: gl.getUniformLocation(program, 'u_rotateY'),
+            fov: gl.getUniformLocation(program, 'u_fov'),
+            saturation: gl.getUniformLocation(program, 'u_saturation'),
+            brightness: gl.getUniformLocation(program, 'u_brightness'),
+            colorDepth: gl.getUniformLocation(program, 'u_colorDepth'),
+            palette: gl.getUniformLocation(program, 'u_palette'),
+            smoothness: gl.getUniformLocation(program, 'u_smoothness'),
+            glow: gl.getUniformLocation(program, 'u_glow'),
+            pixelate: gl.getUniformLocation(program, 'u_pixelate'),
+            vignette: gl.getUniformLocation(program, 'u_vignette'),
+            glowIntensity: gl.getUniformLocation(program, 'u_glowIntensity'),
+            paletteOffset: gl.getUniformLocation(program, 'u_paletteOffset'),
+            paletteSpeed: gl.getUniformLocation(program, 'u_paletteSpeed'),
+            lightAngle: gl.getUniformLocation(program, 'u_lightAngle'),
+            ambient: gl.getUniformLocation(program, 'u_ambient'),
+            edgeFog: gl.getUniformLocation(program, 'u_edgeFog'),
+            specular: gl.getUniformLocation(program, 'u_specular'),
+            fogDist: gl.getUniformLocation(program, 'u_fogDist'),
+            stepSize: gl.getUniformLocation(program, 'u_stepSize'),
+            contrast: gl.getUniformLocation(program, 'u_contrast')
+        };
+        
+        let startTime = Date.now();
+        
+        function render() {
+            const time = (Date.now() - startTime) / 1000;
+            
+            gl.useProgram(program);
+            
+            gl.enableVertexAttribArray(positionLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+            
+            gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+            gl.uniform1f(uniforms.time, time);
+            gl.uniform1f(uniforms.animSpeed, params.animSpeed);
+            gl.uniform1f(uniforms.rotSpeed, params.rotSpeed);
+            gl.uniform1f(uniforms.morphPhase, time * params.morphSpeed + params.morphOffset);
+            gl.uniform1f(uniforms.maxIter, params.maxIter);
+            gl.uniform1f(uniforms.power, params.power);
+            gl.uniform1f(uniforms.fractalSize, params.fractalSize);
+            gl.uniform1f(uniforms.fractalType, params.fractalType);
+            gl.uniform1f(uniforms.rotateX, params.rotateX);
+            gl.uniform1f(uniforms.rotateY, params.rotateY);
+            gl.uniform1f(uniforms.fov, params.fov);
+            gl.uniform1f(uniforms.saturation, params.saturation);
+            gl.uniform1f(uniforms.brightness, params.brightness);
+            gl.uniform1f(uniforms.colorDepth, params.colorDepth);
+            gl.uniform1f(uniforms.palette, params.palette);
+            gl.uniform1f(uniforms.smoothness, params.smoothness);
+            gl.uniform1f(uniforms.glow, params.glow);
+            gl.uniform1f(uniforms.pixelate, params.pixelate);
+            gl.uniform1f(uniforms.vignette, params.vignette);
+            gl.uniform1f(uniforms.glowIntensity, params.glowIntensity);
+            gl.uniform1f(uniforms.paletteOffset, params.paletteOffset);
+            gl.uniform1f(uniforms.paletteSpeed, params.paletteSpeed);
+            gl.uniform1f(uniforms.lightAngle, params.lightAngle);
+            gl.uniform1f(uniforms.ambient, params.ambient);
+            gl.uniform1f(uniforms.edgeFog, params.edgeFog);
+            gl.uniform1f(uniforms.specular, params.specular);
+            gl.uniform1f(uniforms.fogDist, params.fogDist);
+            gl.uniform1f(uniforms.stepSize, params.stepSize);
+            gl.uniform1f(uniforms.contrast, params.contrast);
+            
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            
+            requestAnimationFrame(render);
+        }
+        
+        const controlPanelLeft = document.getElementById('controlPanelLeft');
+        const controlPanelRight = document.getElementById('controlPanelRight');
+        const toggleHint = document.getElementById('toggleHint');
+        let controlsVisible = false;
+        
+        function toggleControls() {
+            controlsVisible = !controlsVisible;
+            controlPanelLeft.classList.toggle('visible', controlsVisible);
+            controlPanelRight.classList.toggle('visible', controlsVisible);
+            toggleHint.style.opacity = controlsVisible ? '0' : '1';
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'c' || e.key === 'C') {
+                toggleControls();
+            }
+        });
+
+        // Click/tap on canvas toggles controls (but not if dragging/scrolling)
+        let pointerDownTime = 0;
+        canvas.addEventListener('pointerdown', () => { pointerDownTime = Date.now(); });
+        canvas.addEventListener('pointerup', (e) => {
+            // Only treat as a tap if it was short (< 250ms) and no significant movement
+            if (Date.now() - pointerDownTime < 250) {
+                // Don't toggle if controls are open and click was on panel area (they're above canvas)
+                toggleControls();
+            }
+        });
+        
+        document.getElementById('closePanelLeft').addEventListener('click', toggleControls);
+        document.getElementById('closePanelRight').addEventListener('click', toggleControls);
+        
+        const sliderMappings = [
+            { slider: 'animSpeed', param: 'animSpeed' },
+            { slider: 'rotSpeed', param: 'rotSpeed' },
+            { slider: 'morphSpeed', param: 'morphSpeed' },
+            { slider: 'morphOffset', param: 'morphOffset' },
+            { slider: 'maxIter', param: 'maxIter' },
+            { slider: 'power', param: 'power' },
+            { slider: 'fractalSize', param: 'fractalSize' },
+            { slider: 'fractalType', param: 'fractalType' },
+            { slider: 'rotateX', param: 'rotateX' },
+            { slider: 'rotateY', param: 'rotateY' },
+            { slider: 'fov', param: 'fov' },
+            { slider: 'saturation', param: 'saturation' },
+            { slider: 'brightness', param: 'brightness' },
+            { slider: 'colorDepth', param: 'colorDepth' },
+            { slider: 'palette', param: 'palette' },
+            { slider: 'smoothness', param: 'smoothness' },
+            { slider: 'glow', param: 'glow' },
+            { slider: 'pixelate', param: 'pixelate' },
+            { slider: 'vignette', param: 'vignette' },
+            { slider: 'glowIntensity', param: 'glowIntensity' },
+            { slider: 'paletteOffset', param: 'paletteOffset' },
+            { slider: 'paletteSpeed', param: 'paletteSpeed' },
+            { slider: 'lightAngle', param: 'lightAngle' },
+            { slider: 'ambient', param: 'ambient' },
+            { slider: 'edgeFog', param: 'edgeFog' },
+            { slider: 'specular', param: 'specular' },
+            { slider: 'fogDist', param: 'fogDist' },
+            { slider: 'stepSize', param: 'stepSize' },
+            { slider: 'contrast', param: 'contrast' }
+        ];
+        
+        sliderMappings.forEach(mapping => {
+            const slider = document.getElementById(mapping.slider);
+            const valueInput = document.getElementById(mapping.slider + 'Val');
+            
+            if (slider) {
+                slider.addEventListener('input', () => {
+                    params[mapping.param] = parseFloat(slider.value);
+                    if (valueInput) valueInput.value = slider.value;
+                });
+            }
+            
+            if (valueInput) {
+                valueInput.addEventListener('input', () => {
+                    params[mapping.param] = parseFloat(valueInput.value);
+                    if (slider) slider.value = valueInput.value;
+                });
+            }
+        });
+        
+        document.getElementById('scanline').addEventListener('input', (e) => {
+            document.querySelector('.scanline').style.opacity = e.target.value;
+        });
+        
+        // Wire up select dropdowns (not covered by sliderMappings)
+        document.getElementById('fractalType').addEventListener('change', (e) => {
+            params.fractalType = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('palette').addEventListener('change', (e) => {
+            params.palette = parseFloat(e.target.value);
+        });
+        
+        render();
+    </script>
+</body>
+</html>
