@@ -4,10 +4,6 @@
 
   **fractal37** is an interactive 3D fractal explorer rendered entirely in WebGL — embedded in a single HTML file (and also available as a full React web app). Fly through mathematically infinite structures with real-time controls for animation, lighting, color, and rendering style.
 
-  ## Live Demo
-
-  [View on Replit →](https://replit.com) &nbsp;·&nbsp; [Open standalone explorer →](index.html) &nbsp;·&nbsp; [Frontpage →](frontpage.html)
-
   ---
 
   ## Features
