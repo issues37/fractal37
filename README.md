@@ -2,7 +2,7 @@
 
   ![fractal37 preview](images/preview.png)
 
-  **fractal37** is an interactive 3D fractal explorer rendered entirely in WebGL — embedded in a single HTML file (and also available as a full React web app). Fly through mathematically infinite structures with real-time controls for animation, lighting, color, and rendering style.
+  **fractal37** is an interactive 3D fractal explorer rendered entirely in WebGL embedded in a single HTML file (and also available as a full React web app). Fly through mathematically infinite structures with real-time controls for animation, lighting, color, and rendering style.
 
   ---
 
@@ -16,13 +16,13 @@
   | **Torus Knot** | Mathematically knotted tube sampled with angular SDF |
   | **Apollonian** | Inversion-based IFS gasket producing infinite circle packing |
   | **Julia 3D** | 4D quaternion Julia set sliced through 3D space |
-  | **Sierpinski Tetra** | Classic IFS tetrahedral fractal — triangular self-similarity |
+  | **Sierpinski Tetra** | Classic IFS tetrahedral fractal triangular self-similarity |
   | **Menger Sponge** | Cube-subtraction fractal with recursive cross-shaped holes |
 
   ### 9 Color Palettes
-  Blade Runner · Cyber · Neon Trout · Heat · Frost · Monochrome · Neon Blue · Magenta Cyan · CGA Retro
-
-  All palettes use Inigo Quilez's cosine-basis formula — mathematically seamless, zero banding.
+  Neon Blue · Magenta Cyan · CGA Retro
+  Blade Runner · Cyber · Neon Trout
+  Heat · Frost · Monochrome
 
   ### Real-Time Controls
 
@@ -79,9 +79,9 @@
   - **Ray marching** with sphere-tracing (distance estimator functions)
   - **150 march steps** per fragment, early exit on hit or miss
   - **Normal estimation** via central differences (6 scene evaluations per surface point)
-  - **Lighting** — Lambertian diffuse + Phong specular + Fresnel rim + depth fog
-  - **Glow** — dual accumulation: hard glow (exp(-d×20)) + soft smooth glow (exp(-d×smoothness))
-  - **Post-processing** — gamma correction, brightness, contrast, vignette, optional pixelation
+  - **Lighting** -Lambertian diffuse + Phong specular + Fresnel rim + depth fog
+  - **Glow** - dual accumulation: hard glow (exp(-d×20)) + soft smooth glow (exp(-d×smoothness))
+  - **Post-processing** - gamma correction, brightness, contrast, vignette, optional pixelation
 
   ### Performance Notes
   - All rendering happens on the GPU via GLSL fragment shaders
@@ -104,7 +104,7 @@
 
   ## License
 
-  MIT License — free to use, modify, and distribute.
+  MIT License - free to use, modify, and distribute.
 
   ---
 
