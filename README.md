@@ -11,7 +11,7 @@
   ## Features
 
 
-  ### 7 Fractal Types
+  ### Seven Fractal Types
   | Name | Description |
   |------|-------------|
   | **Mandelbulb** | 3D extension of Mandelbrot set using spherical power iteration |
@@ -23,10 +23,8 @@
   | **Menger Sponge** | Cube-subtraction fractal with recursive cross-shaped holes |
 
 
-  ### 9 Color Palettes
-  Neon Blue · Magenta Cyan · CGA Retro
-  Blade Runner · Cyber · Neon Trout
-  Heat · Frost · Monochrome
+  ### Nine Color Palettes
+  Neon Blue · Magenta Cyan · CGA Retro · Blade Runner · Cyber · Neon Trout · Heat · Frost · Monochrome
 
 
   ### Real-Time Controls
@@ -34,6 +32,8 @@
   ![controls screenshot](images/controls.png)
 
   Press **C** or **tap/click** anywhere on the canvas to toggle the control panels.
+
+  Some available settings, divided into two panels, are:
 
   - **Animation** speed, rotation speed, morph & offset
   - **Fractal** iterations, power/exponent, size, type
