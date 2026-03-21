@@ -14,7 +14,7 @@
   ### 7 Fractal Types
   | Name | Description |
   |------|-------------|
-  | **Mandelbulb** | The iconic 3D extension of the Mandelbrot set using spherical power iteration |
+  | **Mandelbulb** | 3D extension of Mandelbrot set using spherical power iteration |
   | **Mandelbox** | Box- and sphere-fold IFS fractal with rich interior detail |
   | **Torus Knot** | Mathematically knotted tube sampled with angular SDF |
   | **Apollonian** | Inversion-based IFS gasket producing infinite circle packing |
