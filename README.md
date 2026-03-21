@@ -4,9 +4,12 @@
 
   **fractal37** is an interactive 3D fractal explorer rendered entirely in WebGL embedded in a single HTML file (and also available as a full React web app). Fly through mathematically infinite structures with real-time controls for animation, lighting, color, and rendering style.
 
+
   ---
 
+
   ## Features
+
 
   ### 7 Fractal Types
   | Name | Description |
@@ -19,10 +22,12 @@
   | **Sierpinski Tetra** | Classic IFS tetrahedral fractal triangular self-similarity |
   | **Menger Sponge** | Cube-subtraction fractal with recursive cross-shaped holes |
 
+
   ### 9 Color Palettes
   Neon Blue · Magenta Cyan · CGA Retro
   Blade Runner · Cyber · Neon Trout
   Heat · Frost · Monochrome
+
 
   ### Real-Time Controls
 
@@ -30,21 +35,23 @@
 
   Press **C** or **tap/click** anywhere on the canvas to toggle the control panels.
 
-  - **Animation** — speed, rotation speed, morph speed & offset
-  - **Fractal** — iterations, power/exponent, size, type
-  - **Lighting** — light angle, ambient, edge fog, specular, fog distance, step size, contrast
-  - **Camera** — X/Y rotation, field of view
-  - **Color** — saturation, brightness, color depth, palette, palette offset & cycle speed
-  - **Rendering** — smoothness, glow, pixelate, vignette
-  - **Effects** — scanline intensity, glow intensity
+  - **Animation** speed, rotation speed, morph & offset
+  - **Fractal** iterations, power/exponent, size, type
+  - **Lighting** angle, edge, fog, specular, distance
+  - **Camera** X/Y rotation speeds, field of view
+  - **Color** saturation, brightness, depth, cycles
+  - **Rendering** smoothness, glow, pixelate, vignette
+  - **Effects** scanline intensity, glow intensity
+
 
   ---
+
 
   ## Files
 
   ```
   fractal37/
-  ├── index.html          ← Standalone single-file fractal explorer (no dependencies)
+  ├── index.html          ← Standalone single-file fractal explorer
   ├── frontpage.html      ← Project frontpage with live embed
   ├── images/
   │   ├── preview.png     ← Fractal preview screenshot
@@ -53,6 +60,7 @@
   │   └── index.md        ← Full documentation
   └── README.md           ← This file
   ```
+
 
   ## Running the Standalone HTML File
 
@@ -71,7 +79,9 @@
 
   Requires a browser with **WebGL 1.0** support (all modern browsers qualify).
 
+
   ---
+
 
   ## Technical Details
 
@@ -88,7 +98,9 @@
   - Higher iteration counts and lower step sizes increase quality but reduce frame rate
   - The **Pixelate** control can be used to improve performance on slower GPUs
 
+
   ---
+  
 
   ## Browser Compatibility
 
@@ -100,13 +112,17 @@
   | Edge 80+ | ✅ Full |
   | Mobile (iOS/Android) | ✅ Touch support |
 
+
   ---
+
 
   ## License
 
   MIT License - free to use, modify, and distribute.
 
+
   ---
+
 
   ## Credits
 
