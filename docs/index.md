@@ -1,4 +1,4 @@
-# fractal37 — Documentation
+# fractal37 Documentation
 
   ## Overview
 
