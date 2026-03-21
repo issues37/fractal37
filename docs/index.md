@@ -4,7 +4,7 @@
 
   **fractal37** is a real-time 3D fractal renderer built on WebGL. It ray-marches signed distance functions (SDFs) for each fractal type and renders with physically-inspired lighting, smooth glow, and customizable color palettes.
 
-  Open `index.html` in any browser — no install, no server required.
+  Open `index.html` in any browser, no install, no server required.
 
   ---
 
@@ -32,43 +32,43 @@
 
   ### Left Panel — Animation & Fractal
 
-  | Control | Range | Description |
-  |---------|-------|-------------|
-  | Speed | 0–1 | Overall animation speed multiplier |
-  | Rot Speed | 0–2 | How fast the fractal rotates |
-  | Morph | 0–2 | Rate of internal shape morphing |
-  | Morph Offset | 0–6.28 | Phase offset for morphing |
-  | Iterations | 4–20 | Ray march iteration depth (quality vs. performance) |
-  | Power | 2–16 | Fractal power exponent (changes shape dramatically) |
-  | Size | 0.1–3 | Scale of the fractal |
-  | Type | dropdown | Select one of 7 fractal types |
-  | Light Angle | 0–6.28 | Direction of the key light |
-  | Ambient | 0–1 | Minimum fill light (0 = pure shadow, 1 = flat) |
-  | Edge Fog | 0–1 | Darkens silhouette edges via Fresnel factor |
-  | Specular | 0–2 | Phong specular highlight intensity |
-  | Fog Distance | 1–20 | Depth at which distant surfaces fade to black |
-  | Step Size | 0.3–1.2 | Ray march step multiplier (lower = slower but safer) |
-  | Contrast | 0.5–3 | Push/pull tonal contrast around mid-grey |
+  | Control | Description |
+  |---------|-------------|
+  | Speed | Overall animation speed multiplier |
+  | Rot Speed | How fast the fractal rotates |
+  | Morph | Rate of internal shape morphing |
+  | Morph Offset | Phase offset for morphing |
+  | Iterations | Ray march iteration depth (quality vs. performance) |
+  | Power | Fractal power exponent (changes shape dramatically) |
+  | Size | Scale of the fractal |
+  | Type | Select one of 7 fractal types |
+  | Light Angle | Direction of the key light |
+  | Ambient | Minimum fill light (0 = pure shadow, 1 = flat) |
+  | Edge Fog | Darkens silhouette edges via Fresnel factor |
+  | Specular | Phong specular highlight intensity |
+  | Fog Distance | Depth at which distant surfaces fade to black |
+  | Step Size | Ray march step multiplier (lower = slower but safer) |
+  | Contrast | Push/pull tonal contrast around mid-grey |
 
   ### Right Panel — Camera & Color
 
-  | Control | Range | Description |
-  |---------|-------|-------------|
-  | Rotate X | 0–6.28 | Manual X-axis camera rotation offset |
-  | Rotate Y | 0–6.28 | Manual Y-axis camera rotation offset |
-  | Field of View | 0.5–2 | Camera FOV (wider = more distortion) |
-  | Saturation | 0–2 | Color saturation (0 = greyscale) |
-  | Brightness | 0.1–3 | Overall brightness multiplier |
-  | Color Depth | 0–2 | How much 3D depth affects color |
-  | Palette | dropdown | 9 color palette options |
-  | Palette Offset | 0–6.28 | Shift the palette hue cycle |
-  | Cycle Speed | 0–2 | How fast the palette animates |
-  | Smoothness | 1–50 | Controls soft glow radius |
-  | Glow | 0–5 | Smooth glow intensity |
-  | Pixelate | 1–32 | Pixel block size (1 = off) |
-  | Vignette | 0–1 | Edge darkening |
-  | Scanline | 0–1 | CRT scanline overlay opacity |
-  | Glow Intensity | 0–5 | Hard inner glow intensity |
+  | Control | Description |
+  |---------|-------------|
+  | Rotate X |Manual X-axis camera rotation offset |
+  | Rotate Y | Manual Y-axis camera rotation offset |
+  | Field of View | Camera FOV (wider = more distortion) |
+  | Saturation | Color saturation (0 = greyscale) |
+  | Brightness | Overall brightness multiplier |
+  | Color Depth |How much 3D depth affects color |
+  | Palette | 9 color palette options |
+  | Palette Offset | Shift the palette hue cycle |
+  | Cycle Speed | How fast the palette animates |
+  | Smoothness | Controls soft glow radius |
+  | Glow | Smooth glow intensity |
+  | Pixelate | Pixel block size (1 = off) |
+  | Vignette | Edge darkening |
+  | Scanline | CRT scanline overlay opacity |
+  | Glow Intensity |Hard inner glow intensity |
 
   ---
 
@@ -111,17 +111,17 @@
 
   This guarantees smooth, seamless color cycling with no hard edges or banding.
 
-  | Palette | Mood |
+  | Palette List-Name | Color Cycles |
   |---------|------|
-  | Blade Runner | Deep purples, electric blue, crimson — noir cyberpunk |
-  | Cyber | Cyan → magenta → electric yellow — high-energy neon |
-  | Neon Trout | Vivid pink → teal → orange — neon fever dream |
-  | Heat | Black → deep red → orange → white — plasma forge |
-  | Frost | Midnight navy → ice blue → silver — arctic light |
-  | Monochrome | Smooth silver sine wave — clean structural |
-  | Neon Blue | Deep black → electric blue → white-blue — cold voltage |
-  | Magenta Cyan | Pure magenta → cyan — neon duality |
-  | CGA Retro | Classic 4-color CGA palette — retro PC mode |
+  | Blade Runner | Deep purples, electric blue, crimson, noir cyberpunk |
+  | Cyber | Cyan → magenta → electric yellow, high-energy neon |
+  | Neon Trout | Vivid pink → teal → orange, neon fever dream |
+  | Heat | Black → deep red → orange → white, plasma forge |
+  | Frost | Midnight navy → ice blue → silver, arctic light |
+  | Monochrome | Smooth silver sine wave, clean structural |
+  | Neon Blue | Deep black → electric blue → white-blue, cold voltage |
+  | Magenta Cyan | Pure magenta → cyan, neon duality |
+  | CGA Retro | Classic 4-color CGA palette, retro PC mode |
 
   ---
 
