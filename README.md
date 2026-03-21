@@ -94,7 +94,7 @@
   - **Post-processing** - gamma correction, brightness, contrast, vignette, optional pixelation
 
   ### Performance Notes
-  - All rendering happens on the GPU via GLSL fragment shaders
+  - All rendering happens on the GPU via GLSL fragment shaders. It can get pretty demanding.
   - Higher iteration counts and lower step sizes increase quality but reduce frame rate
   - The **Pixelate** control can be used to improve performance on slower GPUs
 
@@ -119,13 +119,3 @@
   ## License
 
   MIT License - free to use, modify, and distribute.
-
-
-  ---
-
-
-  ## Credits
-
-  - Fractal distance estimators adapted from the work of **Inigo Quilez** (iquilezles.org)
-  - Cosine-basis color palettes by **Inigo Quilez**
-  
